@@ -1,8 +1,10 @@
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
-import org.openrndr.draw.loadFont
-import org.openrndr.draw.loadImage
-import org.openrndr.draw.tint
+import org.openrndr.draw.*
+import org.openrndr.extra.noise.Random
+import org.openrndr.shape.Circle
+import org.openrndr.shape.Rectangle
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -19,13 +21,28 @@ fun main() = application {
         extend {
             drawer.drawStyle.colorMatrix = tint(ColorRGBa.WHITE.shade(0.2))
             drawer.image(image)
+        }
 
-            drawer.fill = ColorRGBa.PINK
-            drawer.circle(cos(seconds) * width / 2.0 + width / 2.0, sin(0.5 * seconds) * height / 2.0 + height / 2.0, 140.0)
+        val numPoints = 100
+        val sineWaves = List(10) { SineWave(-5 rnd 5, 0 rnd PI * 2, 10 rnd 30) }
 
-            drawer.fontMap = font
-            drawer.fill = ColorRGBa.WHITE
-            drawer.text("OPENRNDR", width / 2.0, height / 2.0)
+        extend {
+            drawer.fill = ColorRGBa.WHITE.opacify(0.3)
+            drawer.stroke = null
+            drawer.rectangles(List(numPoints) { num ->
+                val x = width * num / (numPoints - 1.0)
+                val y = height * 0.5 + sineWaves.sumOf {
+                    it.value(seconds, x * 0.01)
+                }
+                Rectangle(x, y, 10.0)
+            })
         }
     }
 }
+
+data class SineWave(val freq: Double, val shift: Double, val amp: Double) {
+    fun value(t: Double, x: Double) = amp * sin(t * freq + shift * x)
+}
+
+infix fun Number.rnd(max: Number) =
+    Random.double(this.toDouble(), max.toDouble())
